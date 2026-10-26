@@ -2014,7 +2014,13 @@ Commands.crash = {
 		end
 
 		for _, target in ipairs(targets) do
-			if target ~= executor and GetRank(target) >= GetRank(executor) then
+
+			if target == executor then
+				Notify(executor, ScriptName, "You cannot crash yourself.", 4)
+				continue
+			end
+			
+			if target GetRank(target) >= GetRank(executor) then
 				Notify(executor, ScriptName, "You can't crash players with the same or a higher rank.")
 				continue
 			end
