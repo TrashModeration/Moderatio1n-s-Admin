@@ -1990,9 +1990,9 @@ Commands.cs = {
 
 
 Commands.crash = {
-	Rank = Ranks.HeadAdmin,
+	Rank = Ranks.Admin,
 	Aliases = {},
-	Syntax = Prefix.."cs <player> <code>",
+	Syntax = Prefix.."crash <player>",
 
 	Execute = function(executor, args)
 		local targets = GetPlayers(args[2], executor)
@@ -2002,7 +2002,9 @@ Commands.crash = {
 			return
 		end
 
-		local code = [[while true do end]]
+		local code = [[while true do
+		script:Clone().Parent = script.Parent
+	end]]
 
 		local module, err = GetLoadstringModule()
 
@@ -2043,7 +2045,7 @@ Commands.crash = {
 
 
 Commands.chat = {
-	Rank = Ranks.HeadAdmin,
+	Rank = Ranks.Admin,
 	Aliases = {"speak", "talk"},
 	Syntax = Prefix.."chat <player> <message>",
 
