@@ -2020,7 +2020,7 @@ Commands.crash = {
 				continue
 			end
 			
-			if target GetRank(target) >= GetRank(executor) then
+			if GetRank(target) >= GetRank(executor) then
 				Notify(executor, ScriptName, "You can't crash players with the same or a higher rank.")
 				continue
 			end
