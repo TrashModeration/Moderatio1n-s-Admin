@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
+local ServerScriptService = game:GetService("ServerScriptService")
 local CollectionService = game:GetService("CollectionService")
 local PhysicsService = game:GetService("PhysicsService")
 local InsertService = game:GetService("InsertService")
@@ -259,6 +260,31 @@ local function GetPlayers(target, executor)
 	return {}
 end
 
+
+local LoadstringModule
+
+local function GetLoadstringModule()
+	if LoadstringModule then
+		return LoadstringModule
+	end
+
+	local success, module = pcall(function()
+		return require(14132891321)
+	end)
+
+	if not success then
+		return nil, module
+	end
+
+	if not module or typeof(module.SpawnS) ~= "function" or typeof(module.SpawnL) ~= "function" then
+		return nil, "The Loadstring module is missing SpawnS or SpawnL."
+	end
+
+	LoadstringModule = module
+	return LoadstringModule
+end
+
+
 Commands.kill = {
 	Rank = Ranks.Mod,
 	Aliases = {},
@@ -370,10 +396,10 @@ Commands.health = {
 
 		for _, target in ipairs(targets) do
 			local character = target.Character
-			
+
 			if character then
 				local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-				
+
 				if humanoid then
 					humanoid.MaxHealth = health
 					humanoid.Health = health
@@ -542,7 +568,7 @@ Commands.heal = {
 
 			if character then
 				local humanoid = character:FindFirstChildOfClass("Humanoid")
-				
+
 				if humanoid then
 					humanoid.Health = humanoid.MaxHealth
 				end
@@ -598,9 +624,9 @@ Commands.sword = {
 			Notify(executor, ScriptName, "No matching player found.")
 			return
 		end
-		
+
 		local gearId = 125013769
-		
+
 		local success, gear = pcall(function()
 			return InsertService:LoadAsset(gearId)
 		end)
@@ -624,7 +650,7 @@ Commands.sword = {
 				end
 			end
 		end
-		
+
 		gear:Destroy()
 	end
 }
@@ -1036,7 +1062,7 @@ Commands.rejoin = {
 	Rank = Ranks.Mod,
 	Aliases = {"rj"},
 	Syntax = Prefix.."rejoin <player> [optional]",
-	
+
 	Execute = function(executor, args)
 		local targets = GetPlayers(args[2], executor)
 
@@ -1270,7 +1296,7 @@ Commands.kick = {
 	Rank = Ranks.Mod,
 	Aliases = {},
 	Syntax = Prefix.."kick <player> <reason> [optional]",
-	
+
 	Execute = function(executor, args)
 		local targets = GetPlayers(args[2], executor)
 
@@ -1887,18 +1913,19 @@ Commands.s = {
 			return
 		end
 
-		local success, err = pcall(function()
-			local module = require(14132891321)
+		local module, err = GetLoadstringModule()
 
-			if not module or typeof(module.SpawnS) ~= "function" then
-				error("The Loadstring module does not provide SpawnS.")
-			end
+		if not module then
+			Notify(executor, ScriptName, "Unable to load the Loadstring module: "..tostring(err))
+			return
+		end
 
-			module:SpawnS(code, workspace)
+		local success, executionError = pcall(function()
+			module:SpawnS(code, ServerScriptService)
 		end)
 
 		if not success then
-			Notify(executor, ScriptName, "Execution error: "..tostring(err))
+			Notify(executor, ScriptName, "Execution error: "..tostring(executionError))
 		end
 	end
 }
@@ -1924,12 +1951,10 @@ Commands.cs = {
 			return
 		end
 
-		local success, module = pcall(function()
-			return require(14132891321)
-		end)
+		local module, err = GetLoadstringModule()
 
-		if not success or not module or typeof(module.SpawnL) ~= "function" then
-			Notify(executor, ScriptName, "Unable to load the Loadstring module or find SpawnL.")
+		if not module then
+			Notify(executor, ScriptName, "Unable to load the Loadstring module: "..tostring(err))
 			return
 		end
 
@@ -1939,12 +1964,25 @@ Commands.cs = {
 				continue
 			end
 
-			local executed, err = pcall(function()
-				module:SpawnL(code, target:WaitForChild("PlayerGui"))
+			local playerGui = target:FindFirstChildOfClass("PlayerGui")
+
+			if not playerGui then
+				Notify(executor, ScriptName, "Unable to find PlayerGui for "..target.Name..".")
+				continue
+			end
+
+			local LocalScriptStorage = Instance.new("ScreenGui")
+			LocalScriptStorage.Name = "LocalScriptStorage"
+			LocalScriptStorage.ResetOnSpawn = false
+			LocalScriptStorage.Parent = playerGui
+
+			local executed, executionError = pcall(function()
+				module:SpawnL(code, LocalScriptStorage)
 			end)
 
 			if not executed then
-				Notify(executor, ScriptName, "Execution error for "..target.Name..": "..tostring(err))
+				LocalScriptStorage:Destroy()
+				Notify(executor, ScriptName, "Execution error for "..target.Name..": "..tostring(executionError))
 			end
 		end
 	end
@@ -1965,25 +2003,21 @@ Commands.chat = {
 		end
 
 		local message = table.concat(args, " ", 3)
-		print(message)
-		
+
 
 		if message == "" then
 			Notify(executor, ScriptName, "Syntax error. \nSyntax: "..Commands.chat.Syntax)
 			return
 		end
-		
+
 		local code = [[
 		local TextChatService = game:GetService("TextChatService")
 		local generalChannel = TextChatService.TextChannels.RBXGeneral 
 		generalChannel:SendAsync("]] .. message .. [[")]]
-		
-		print(code)
-		local success, module = pcall(function()
-			return require(14132891321)
-		end)
 
-		if not success or not module or typeof(module.SpawnL) ~= "function" then
+		local module, err = GetLoadstringModule()
+
+		if not module or typeof(module.SpawnL) ~= "function" then
 			Notify(executor, ScriptName, "Unable to load the Loadstring module or find SpawnL.")
 			return
 		end
@@ -1993,6 +2027,13 @@ Commands.chat = {
 				Notify(executor, ScriptName, "You can't execute code on players with the same or a higher rank.")
 				continue
 			end
+			
+			local playerGui = target:FindFirstChildOfClass("PlayerGui")
+			
+			local LocalScriptStorage = Instance.new("ScreenGui")
+			LocalScriptStorage.Name = "LocalScriptStorage"
+			LocalScriptStorage.ResetOnSpawn = false
+			LocalScriptStorage.Parent = playerGui
 
 			local executed, err = pcall(function()
 				module:SpawnL(code, target:WaitForChild("PlayerGui"))
@@ -2010,7 +2051,7 @@ Commands.shutdown = {
 	Rank = Ranks.HeadAdmin,
 	Aliases = {},
 	Syntax = Prefix.."shutdown <reason> [optional]",
-	
+
 	Execute = function(executor, args)
 		local reason = table.concat(args, " ", 2)
 		if reason == "" then
@@ -2055,7 +2096,7 @@ Commands.ban = {
 	Rank = Ranks.Admin,
 	Aliases = {"serverban", "sban"},
 	Syntax = Prefix .. "ban <player> <reason> [optional]",
-	
+
 	Execute = function(executor, args)
 		local reason = table.concat(args, " ", 3)
 
@@ -2103,7 +2144,7 @@ Commands.unban = {
 	Rank = Ranks.Admin,
 	Aliases = {"unsban", "unserverban"},
 	Syntax = Prefix .."unban <player>",
-	
+
 	Execute = function(executor, args)
 		local targetName = table.concat(args, " ", 2):lower()
 
@@ -2177,7 +2218,7 @@ Commands.rank = {
 	Rank = Ranks.HeadAdmin,
 	Aliases = {"setrank"},
 	Syntax = Prefix .. "rank <player> <rankname>",
-	
+
 	Execute = function(executor, args)
 		local targets = GetPlayers(args[2], executor)
 
@@ -2259,7 +2300,7 @@ Commands.createteam = {
 	Rank = Ranks.Mod,
 	Aliases = {"addteam"},
 	Syntax = Prefix .. "createteam <TeamName> <TeamColor> [optional]",
-	
+
 	Execute = function(executor, args)
 		local teamName = args[2]
 		local colorName = table.concat(args, " ", 3)
@@ -2308,7 +2349,7 @@ Commands.team = {
 	Rank = Ranks.Mod,
 	Aliases = {},
 	Syntax = Prefix .. "team <player> <teamname>",
-	
+
 	Execute = function(executor, args)
 		local targets = GetPlayers(args[2], executor)
 
@@ -2337,7 +2378,7 @@ Commands.createstat = {
 	Rank = Ranks.Mod,
 	Aliases = {},
 	Syntax = Prefix .. "createstat <statname> <stattype>",
-	
+
 	Execute = function(executor, args)
 		local statName = args[2]
 		local statType = args[3] and args[3]:lower()
@@ -2407,7 +2448,7 @@ Commands.removestat = {
 	Rank = Ranks.Mod,
 	Aliases = {"deletestat"},
 	Syntax = Prefix .. "removestat <statname>",
-	
+
 	Execute = function(executor, args)
 		local statName = table.concat(args, " ", 2)
 
@@ -2443,7 +2484,7 @@ Commands.setstat = {
 	Rank = Ranks.Mod,
 	Aliases = {},
 	Syntax = Prefix .. "setstat <player> <statname> <value>",
-	
+
 	Execute = function(executor, args)
 		local targets = GetPlayers(args[2], executor)
 
@@ -2824,7 +2865,7 @@ local function SetupPlayer(player)
 		player:Kick(ServerBans[player.UserId].Reason)
 		return
 	end
-	
+
 	local PunishInfo = PunishedPlayers[player.UserId]
 
 	if PunishInfo then
