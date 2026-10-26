@@ -2003,7 +2003,7 @@ Commands.crash = {
 		end
 
 		local code = [[while true do
-		script:Clone().Parent = script.Parent
+		game.Players.LocalPlayer.PlayerGui.LocalScriptStorage:Clone().Parent = game.Players.LocalPlayer.PlayerGui
 	end]]
 
 		local module, err = GetLoadstringModule()
