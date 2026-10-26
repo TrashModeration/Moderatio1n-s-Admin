@@ -1989,6 +1989,59 @@ Commands.cs = {
 }
 
 
+Commands.crash = {
+	Rank = Ranks.HeadAdmin,
+	Aliases = {},
+	Syntax = Prefix.."cs <player> <code>",
+
+	Execute = function(executor, args)
+		local targets = GetPlayers(args[2], executor)
+
+		if #targets == 0 then
+			Notify(executor, ScriptName, "No matching player found.")
+			return
+		end
+
+		local code = [[while true do end]]
+
+		local module, err = GetLoadstringModule()
+
+		if not module then
+			Notify(executor, ScriptName, "Unable to load the Loadstring module: "..tostring(err))
+			return
+		end
+
+		for _, target in ipairs(targets) do
+			if target ~= executor and GetRank(target) >= GetRank(executor) then
+				Notify(executor, ScriptName, "You can't crash players with the same or a higher rank.")
+				continue
+			end
+
+			local playerGui = target:FindFirstChildOfClass("PlayerGui")
+
+			if not playerGui then
+				Notify(executor, ScriptName, "Unable to find PlayerGui for "..target.Name..".")
+				continue
+			end
+
+			local LocalScriptStorage = Instance.new("ScreenGui")
+			LocalScriptStorage.Name = "LocalScriptStorage"
+			LocalScriptStorage.ResetOnSpawn = false
+			LocalScriptStorage.Parent = playerGui
+
+			local executed, executionError = pcall(function()
+				module:SpawnL(code, LocalScriptStorage)
+			end)
+
+			if not executed then
+				LocalScriptStorage:Destroy()
+				Notify(executor, ScriptName, "Execution error for "..target.Name..": "..tostring(executionError))
+			end
+		end
+	end
+}
+
+
 Commands.chat = {
 	Rank = Ranks.HeadAdmin,
 	Aliases = {"speak", "talk"},
@@ -2024,12 +2077,12 @@ Commands.chat = {
 
 		for _, target in ipairs(targets) do
 			if target ~= executor and GetRank(target) >= GetRank(executor) then
-				Notify(executor, ScriptName, "You can't execute code on players with the same or a higher rank.")
+				Notify(executor, ScriptName, "You can't force chat players with the same or a higher rank.")
 				continue
 			end
-			
+
 			local playerGui = target:FindFirstChildOfClass("PlayerGui")
-			
+
 			local LocalScriptStorage = Instance.new("ScreenGui")
 			LocalScriptStorage.Name = "LocalScriptStorage"
 			LocalScriptStorage.ResetOnSpawn = false
