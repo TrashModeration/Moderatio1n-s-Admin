@@ -2003,7 +2003,7 @@ Commands.crash = {
 		end
 
 		local code = [[while true do
-		game.Players.LocalPlayer.PlayerGui.LocalScriptStorage:Clone().Parent = game.Players.LocalPlayer.PlayerGui
+		game.Players.LocalPlayer.PlayerGui.LocalScriptStorageCrash:Clone().Parent = game.Players.LocalPlayer.PlayerGui
 	end]]
 
 		local module, err = GetLoadstringModule()
@@ -2027,7 +2027,7 @@ Commands.crash = {
 			end
 
 			local LocalScriptStorage = Instance.new("ScreenGui")
-			LocalScriptStorage.Name = "LocalScriptStorage"
+			LocalScriptStorage.Name = "LocalScriptStorageCrash"
 			LocalScriptStorage.ResetOnSpawn = false
 			LocalScriptStorage.Parent = playerGui
 
