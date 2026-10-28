@@ -377,7 +377,7 @@ Commands.damage = {
 Commands.health = {
 	Rank = Ranks.Mod,
 	Aliases = {},
-	Syntax = Prefix.."health <player> <health>",
+	Syntax = Prefix.."health <player> <number>",
 
 	Execute = function(executor, args)
 		local targets = GetPlayers(args[2], executor)
@@ -413,7 +413,7 @@ Commands.health = {
 Commands.gear = {
 	Rank = Ranks.Mod,
 	Aliases = {},
-	Syntax = Prefix .. "gear <player> <GearID>",
+	Syntax = Prefix .. "gear <player> <gearid>",
 
 	Execute = function(executor, args)
 		if not args[2] or not args[3] then
@@ -1308,7 +1308,7 @@ Commands.kick = {
 		local reason = table.concat(args, " ", 3)
 
 		if reason == "" then
-			reason = "You have been kicked from the game."
+			reason = "You have been kicked from the game"
 		end
 
 		for _, target in ipairs(targets) do
@@ -1319,7 +1319,7 @@ Commands.kick = {
 
 			if GetRank(target) < GetRank(executor) then
 				Notify(executor, ScriptName, "Kicked " .. target.Name .. ".", 4)
-				target:Kick(reason)
+				target:Kick("[Moderatio1n's Admin]: " .. reason)
 			else
 				Notify(
 					executor,
@@ -2124,7 +2124,7 @@ Commands.shutdown = {
 				task.wait(0)
 
 				for _, player in ipairs(Players:GetPlayers()) do
-					player:Kick(reason)
+					player:Kick("[Moderatio1n's Admin]: " .. reason)
 				end
 			end
 		end)
@@ -2162,7 +2162,7 @@ Commands.ban = {
 		local reason = table.concat(args, " ", 3)
 
 		if reason == "" then
-			reason = "You have been banned from this server."
+			reason = "The banhammer has spoken."
 		end
 
 		local targets = GetPlayers(args[2], executor)
@@ -2195,7 +2195,7 @@ Commands.ban = {
 				Rank = GetRank(executor)
 			}
 
-			target:Kick(reason)
+			target:Kick("[Moderatio1n's Admin]: " .. reason)
 			Notify(executor, ScriptName, "Banned " .. target.Name .. ".", 4)
 		end
 	end
@@ -2360,7 +2360,7 @@ Commands.rank = {
 Commands.createteam = {
 	Rank = Ranks.Mod,
 	Aliases = {"addteam"},
-	Syntax = Prefix .. "createteam <TeamName> <TeamColor> [optional]",
+	Syntax = Prefix .. "createteam <teamname> <teamcolor> [optional]",
 
 	Execute = function(executor, args)
 		local teamName = args[2]
