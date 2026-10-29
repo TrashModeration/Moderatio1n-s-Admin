@@ -2756,6 +2756,7 @@ Commands.commands = {
 			Content.Position = UDim2.new(0, 0, 0, 42)
 			Content.Size = UDim2.new(1, 0, 1, -42)
 			Content.BackgroundTransparency = 1
+			Content.Visible = true
 			Content.Parent = MainFrame
 
 			local Sidebar = Instance.new("Frame")
@@ -3077,13 +3078,14 @@ Commands.commands = {
 			RefreshBansButton.MouseButton1Click:Connect(RefreshBans)
 
 			local minimized = false
-
+			
 			MinimizeButton.MouseButton1Click:Connect(function()
 				minimized = not minimized
 
 				if minimized then
 					MinimizeButton.Text = "+"
 					Content.Visible = false
+
 					MainFrame:TweenSize(
 						UDim2.new(0.9, 0, 0, 42),
 						Enum.EasingDirection.Out,
@@ -3093,6 +3095,7 @@ Commands.commands = {
 					)
 				else
 					MinimizeButton.Text = "−"
+
 					MainFrame:TweenSize(
 						UDim2.new(0.9, 0, 0.8, 0),
 						Enum.EasingDirection.Out,
