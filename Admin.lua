@@ -938,8 +938,10 @@ Commands.trip = {
 
 			if character then
 				local HRP = character:FindFirstChild("HumanoidRootPart")
-				HRP.CFrame = HRP.CFrame * CFrame.Angles(math.pi, 0, 0)
-				HRP.AssemblyAngularVelocity = Vector3.new(25, 0, 0)
+				if HRP then
+					HRP.CFrame = HRP.CFrame * CFrame.Angles(math.pi, 0, 0)
+					HRP.AssemblyAngularVelocity = Vector3.new(25, 0, 0)
+				end
 			end
 		end
 	end
