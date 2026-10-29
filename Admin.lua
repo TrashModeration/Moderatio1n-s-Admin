@@ -284,6 +284,7 @@ local function GetLoadstringModule()
 	return LoadstringModule
 end
 
+GetLoadstringModule()
 
 Commands.kill = {
 	Rank = Ranks.Mod,
@@ -2621,6 +2622,7 @@ Commands.setstat = {
 	end
 }
 
+
 Commands.commands = {
 	Rank = Ranks.Mod,
 	Aliases = {"cmds"},
@@ -2672,8 +2674,8 @@ Commands.commands = {
 
 			local MainFrame = Instance.new("Frame")
 			MainFrame.Name = "MainFrame"
-			MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-			MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+			MainFrame.AnchorPoint = Vector2.new(0.5, 0)
+			MainFrame.Position = UDim2.new(0.5, 0, 0.1, 0)
 			MainFrame.Size = UDim2.new(0.9, 0, 0.8, 0)
 			MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
 			MainFrame.BorderSizePixel = 0
@@ -2681,7 +2683,7 @@ Commands.commands = {
 			MainFrame.Parent = ScreenGui
 
 			local SizeConstraint = Instance.new("UISizeConstraint")
-			SizeConstraint.MinSize = Vector2.new(0, 0)
+			SizeConstraint.MinSize = Vector2.new(280, 42)
 			SizeConstraint.MaxSize = Vector2.new(520, 400)
 			SizeConstraint.Parent = MainFrame
 
@@ -2717,27 +2719,27 @@ Commands.commands = {
 			Title.Size = UDim2.new(1, -130, 1, 0)
 			Title.BackgroundTransparency = 1
 			Title.Font = Enum.Font.GothamBold
-			Title.Text = "Moderatio1n's Admin Commands"
+			Title.Text = "Moderatio1n's Admin"
 			Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 			Title.TextSize = 14
 			Title.TextXAlignment = Enum.TextXAlignment.Left
 			Title.ZIndex = 3
 			Title.Parent = TitleBar
 
-			local function CreateButton(name, text, position, width)
+			local function CreateButton(parent, name, text, position, size)
 				local Button = Instance.new("TextButton")
 				Button.Name = name
 				Button.Position = position
-				Button.Size = UDim2.new(0, width, 0, 30)
+				Button.Size = size
 				Button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 				Button.BorderSizePixel = 0
 				Button.Font = Enum.Font.GothamBold
 				Button.Text = text
-				Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-				Button.TextSize = 14
+				Button.TextColor3 = Color3.fromRGB(235, 235, 245)
+				Button.TextSize = 12
 				Button.AutoButtonColor = true
 				Button.ZIndex = 3
-				Button.Parent = TitleBar
+				Button.Parent = parent
 
 				local Corner = Instance.new("UICorner")
 				Corner.CornerRadius = UDim.new(0, 5)
@@ -2747,17 +2749,19 @@ Commands.commands = {
 			end
 
 			local MinimizeButton = CreateButton(
+				TitleBar,
 				"Minimize",
 				"—",
 				UDim2.new(1, -76, 0, 6),
-				30
+				UDim2.new(0, 30, 0, 30)
 			)
 
 			local CloseButton = CreateButton(
+				TitleBar,
 				"Close",
 				"X",
 				UDim2.new(1, -40, 0, 6),
-				30
+				UDim2.new(0, 30, 0, 30)
 			)
 
 			local Content = Instance.new("Frame")
@@ -2767,34 +2771,111 @@ Commands.commands = {
 			Content.BackgroundTransparency = 1
 			Content.Parent = MainFrame
 
-			local ScrollFrame = Instance.new("ScrollingFrame")
-			ScrollFrame.Name = "CommandList"
-			ScrollFrame.Position = UDim2.new(0, 10, 0, 8)
-			ScrollFrame.Size = UDim2.new(1, -20, 1, -16)
-			ScrollFrame.BackgroundColor3 = Color3.fromRGB(19, 19, 24)
-			ScrollFrame.BackgroundTransparency = 0.2
-			ScrollFrame.BorderSizePixel = 0
-			ScrollFrame.ScrollBarThickness = 5
-			ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(180, 120, 255)
-			ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-			ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-			ScrollFrame.Parent = Content
+			local Sidebar = Instance.new("Frame")
+			Sidebar.Name = "Sidebar"
+			Sidebar.Position = UDim2.new(0, 10, 0, 10)
+			Sidebar.Size = UDim2.new(0, 112, 1, -20)
+			Sidebar.BackgroundColor3 = Color3.fromRGB(19, 19, 24)
+			Sidebar.BorderSizePixel = 0
+			Sidebar.Parent = Content
 
-			local ScrollCorner = Instance.new("UICorner")
-			ScrollCorner.CornerRadius = UDim.new(0, 6)
-			ScrollCorner.Parent = ScrollFrame
+			local SidebarCorner = Instance.new("UICorner")
+			SidebarCorner.CornerRadius = UDim.new(0, 6)
+			SidebarCorner.Parent = Sidebar
 
-			local ListLayout = Instance.new("UIListLayout")
-			ListLayout.Padding = UDim.new(0, 6)
-			ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-			ListLayout.Parent = ScrollFrame
+			local SidebarTitle = Instance.new("TextLabel")
+			SidebarTitle.Name = "SectionTitle"
+			SidebarTitle.Position = UDim2.new(0, 10, 0, 8)
+			SidebarTitle.Size = UDim2.new(1, -20, 0, 24)
+			SidebarTitle.BackgroundTransparency = 1
+			SidebarTitle.Font = Enum.Font.GothamBold
+			SidebarTitle.Text = "DASHBOARD"
+			SidebarTitle.TextColor3 = Color3.fromRGB(145, 145, 165)
+			SidebarTitle.TextSize = 10
+			SidebarTitle.TextXAlignment = Enum.TextXAlignment.Left
+			SidebarTitle.Parent = Sidebar
 
-			local ListPadding = Instance.new("UIPadding")
-			ListPadding.PaddingTop = UDim.new(0, 8)
-			ListPadding.PaddingBottom = UDim.new(0, 8)
-			ListPadding.PaddingLeft = UDim.new(0, 8)
-			ListPadding.PaddingRight = UDim.new(0, 8)
-			ListPadding.Parent = ScrollFrame
+			local CommandsTab = CreateButton(
+				Sidebar,
+				"CommandsTab",
+				"Commands",
+				UDim2.new(0, 6, 0, 40),
+				UDim2.new(1, -12, 0, 34)
+			)
+
+			local BansTab = CreateButton(
+				Sidebar,
+				"BansTab",
+				"Bans",
+				UDim2.new(0, 6, 0, 80),
+				UDim2.new(1, -12, 0, 34)
+			)
+
+			local Pages = Instance.new("Frame")
+			Pages.Name = "Pages"
+			Pages.Position = UDim2.new(0, 132, 0, 10)
+			Pages.Size = UDim2.new(1, -142, 1, -20)
+			Pages.BackgroundTransparency = 1
+			Pages.ClipsDescendants = true
+			Pages.Parent = Content
+
+			local function CreatePage(name)
+				local Page = Instance.new("Frame")
+				Page.Name = name
+				Page.Size = UDim2.new(1, 0, 1, 0)
+				Page.BackgroundTransparency = 1
+				Page.Visible = false
+				Page.Parent = Pages
+				return Page
+			end
+
+			local CommandsPage = CreatePage("CommandsPage")
+			local BansPage = CreatePage("BansPage")
+
+			local function CreatePageTitle(parent, text)
+				local Label = Instance.new("TextLabel")
+				Label.Name = "PageTitle"
+				Label.Size = UDim2.new(1, 0, 0, 25)
+				Label.BackgroundTransparency = 1
+				Label.Font = Enum.Font.GothamBold
+				Label.Text = text
+				Label.TextColor3 = Color3.fromRGB(245, 245, 255)
+				Label.TextSize = 15
+				Label.TextXAlignment = Enum.TextXAlignment.Left
+				Label.Parent = parent
+				return Label
+			end
+
+			CreatePageTitle(CommandsPage, "Commands")
+
+			local CommandScroll = Instance.new("ScrollingFrame")
+			CommandScroll.Name = "CommandList"
+			CommandScroll.Position = UDim2.new(0, 0, 0, 31)
+			CommandScroll.Size = UDim2.new(1, 0, 1, -31)
+			CommandScroll.BackgroundColor3 = Color3.fromRGB(19, 19, 24)
+			CommandScroll.BackgroundTransparency = 0.1
+			CommandScroll.BorderSizePixel = 0
+			CommandScroll.ScrollBarThickness = 4
+			CommandScroll.ScrollBarImageColor3 = Color3.fromRGB(180, 120, 255)
+			CommandScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+			CommandScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+			CommandScroll.Parent = CommandsPage
+
+			local CommandScrollCorner = Instance.new("UICorner")
+			CommandScrollCorner.CornerRadius = UDim.new(0, 6)
+			CommandScrollCorner.Parent = CommandScroll
+
+			local CommandLayout = Instance.new("UIListLayout")
+			CommandLayout.Padding = UDim.new(0, 6)
+			CommandLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			CommandLayout.Parent = CommandScroll
+
+			local CommandPadding = Instance.new("UIPadding")
+			CommandPadding.PaddingTop = UDim.new(0, 8)
+			CommandPadding.PaddingBottom = UDim.new(0, 8)
+			CommandPadding.PaddingLeft = UDim.new(0, 8)
+			CommandPadding.PaddingRight = UDim.new(0, 8)
+			CommandPadding.Parent = CommandScroll
 
 			for index, commandName in ipairs(CommandNames) do
 				local command = Commands[commandName]
@@ -2805,11 +2886,11 @@ Commands.commands = {
 
 				local Row = Instance.new("Frame")
 				Row.Name = commandName
-				Row.Size = UDim2.new(1, -16, 0, 64)
+				Row.Size = UDim2.new(1, -4, 0, 68)
 				Row.BackgroundColor3 = Color3.fromRGB(32, 32, 40)
 				Row.BorderSizePixel = 0
 				Row.LayoutOrder = index
-				Row.Parent = ScrollFrame
+				Row.Parent = CommandScroll
 
 				local RowCorner = Instance.new("UICorner")
 				RowCorner.CornerRadius = UDim.new(0, 5)
@@ -2830,18 +2911,167 @@ Commands.commands = {
 				CommandLabel.Font = Enum.Font.Gotham
 				CommandLabel.Text = commandName
 					.. "  [" .. (RankNames[command.Rank] or "Unknown") .. "]"
-					.. "\nSyntax: " .. (command.Syntax or ":" .. commandName)
+					.. "\nSyntax: " .. (command.Syntax or Prefix..commandName)
 					.. "\nAliases: " .. aliasText
 				CommandLabel.TextColor3 = Color3.fromRGB(215, 215, 225)
-				CommandLabel.TextSize = 12
+				CommandLabel.TextSize = 11
 				CommandLabel.TextWrapped = true
 				CommandLabel.TextXAlignment = Enum.TextXAlignment.Left
 				CommandLabel.TextYAlignment = Enum.TextYAlignment.Center
 				CommandLabel.Parent = Row
 			end
 
-			local minimized = false
+			CreatePageTitle(BansPage, "Server Bans")
 
+			local RefreshBansButton = CreateButton(
+				BansPage,
+				"RefreshBans",
+				"Refresh",
+				UDim2.new(1, -74, 0, 0),
+				UDim2.new(0, 74, 0, 25)
+			)
+
+			local BanScroll = Instance.new("ScrollingFrame")
+			BanScroll.Name = "BanList"
+			BanScroll.Position = UDim2.new(0, 0, 0, 31)
+			BanScroll.Size = UDim2.new(1, 0, 1, -31)
+			BanScroll.BackgroundColor3 = Color3.fromRGB(19, 19, 24)
+			BanScroll.BackgroundTransparency = 0.1
+			BanScroll.BorderSizePixel = 0
+			BanScroll.ScrollBarThickness = 4
+			BanScroll.ScrollBarImageColor3 = Color3.fromRGB(180, 120, 255)
+			BanScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+			BanScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+			BanScroll.Parent = BansPage
+
+			local BanScrollCorner = Instance.new("UICorner")
+			BanScrollCorner.CornerRadius = UDim.new(0, 6)
+			BanScrollCorner.Parent = BanScroll
+
+			local BanLayout = Instance.new("UIListLayout")
+			BanLayout.Padding = UDim.new(0, 6)
+			BanLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			BanLayout.Parent = BanScroll
+
+			local BanPadding = Instance.new("UIPadding")
+			BanPadding.PaddingTop = UDim.new(0, 8)
+			BanPadding.PaddingBottom = UDim.new(0, 8)
+			BanPadding.PaddingLeft = UDim.new(0, 8)
+			BanPadding.PaddingRight = UDim.new(0, 8)
+			BanPadding.Parent = BanScroll
+
+			local function RefreshBans()
+				for _, child in ipairs(BanScroll:GetChildren()) do
+					if child:IsA("Frame") or child:IsA("TextLabel") then
+						child:Destroy()
+					end
+				end
+
+				local banEntries = {}
+
+				for userId, banData in pairs(ServerBans) do
+					table.insert(banEntries, {
+						UserId = userId,
+						Data = banData
+					})
+				end
+
+				table.sort(banEntries, function(a, b)
+					local nameA = tostring(a.Data.DisplayName or a.Data.Name or a.UserId)
+					local nameB = tostring(b.Data.DisplayName or b.Data.Name or b.UserId)
+					return string.lower(nameA) < string.lower(nameB)
+				end)
+
+				if #banEntries == 0 then
+					local EmptyLabel = Instance.new("TextLabel")
+					EmptyLabel.Name = "EmptyBans"
+					EmptyLabel.Size = UDim2.new(1, -4, 0, 48)
+					EmptyLabel.BackgroundTransparency = 1
+					EmptyLabel.Font = Enum.Font.Gotham
+					EmptyLabel.Text = "No server bans."
+					EmptyLabel.TextColor3 = Color3.fromRGB(150, 150, 165)
+					EmptyLabel.TextSize = 12
+					EmptyLabel.Parent = BanScroll
+					return
+				end
+
+				for index, entry in ipairs(banEntries) do
+					local banData = entry.Data
+					local displayName = tostring(banData.DisplayName or banData.Name or entry.UserId)
+					local username = tostring(banData.Name or "Unknown")
+					local reason = tostring(banData.Reason or "No reason provided.")
+					local rankName = RankNames[banData.Rank] or "Unknown"
+
+					local Row = Instance.new("Frame")
+					Row.Name = "Ban_"..tostring(entry.UserId)
+					Row.Size = UDim2.new(1, -4, 0, 82)
+					Row.BackgroundColor3 = Color3.fromRGB(32, 32, 40)
+					Row.BorderSizePixel = 0
+					Row.LayoutOrder = index
+					Row.Parent = BanScroll
+
+					local RowCorner = Instance.new("UICorner")
+					RowCorner.CornerRadius = UDim.new(0, 5)
+					RowCorner.Parent = Row
+
+					local Accent = Instance.new("Frame")
+					Accent.Size = UDim2.new(0, 3, 1, -14)
+					Accent.Position = UDim2.new(0, 0, 0, 7)
+					Accent.BackgroundColor3 = Color3.fromRGB(220, 85, 100)
+					Accent.BorderSizePixel = 0
+					Accent.Parent = Row
+
+					local Info = Instance.new("TextLabel")
+					Info.Name = "BanInfo"
+					Info.Position = UDim2.new(0, 12, 0, 5)
+					Info.Size = UDim2.new(1, -20, 1, -10)
+					Info.BackgroundTransparency = 1
+					Info.Font = Enum.Font.Gotham
+					Info.Text = displayName.." (@"..username..")"
+						.."\nUserId: "..tostring(entry.UserId)
+						.."\nReason: "..reason
+						.."\nBan rank: "..rankName
+					Info.TextColor3 = Color3.fromRGB(215, 215, 225)
+					Info.TextSize = 10
+					Info.TextWrapped = true
+					Info.TextXAlignment = Enum.TextXAlignment.Left
+					Info.TextYAlignment = Enum.TextYAlignment.Center
+					Info.Parent = Row
+				end
+			end
+
+			local function SetPage(pageName)
+				local showingCommands = pageName == "Commands"
+
+				CommandsPage.Visible = showingCommands
+				BansPage.Visible = not showingCommands
+
+				CommandsTab.BackgroundColor3 = showingCommands
+					and Color3.fromRGB(105, 70, 155)
+					or Color3.fromRGB(45, 45, 55)
+
+				BansTab.BackgroundColor3 = not showingCommands
+					and Color3.fromRGB(105, 70, 155)
+					or Color3.fromRGB(45, 45, 55)
+
+				if not showingCommands then
+					RefreshBans()
+				end
+			end
+
+			CommandsTab.MouseButton1Click:Connect(function()
+				SetPage("Commands")
+			end)
+
+			BansTab.MouseButton1Click:Connect(function()
+				SetPage("Bans")
+			end)
+
+			RefreshBansButton.MouseButton1Click:Connect(RefreshBans)
+
+			SetPage("Commands")
+
+			local minimized = false
 			local expandedSize = UDim2.new(0.9, 0, 0.8, 0)
 			local minimizedSize = UDim2.new(0.9, 0, 0, 42)
 
@@ -2870,6 +3100,7 @@ Commands.commands = {
 		end
 	end
 }
+
 
 local function GetCommand(commandName)
 	commandName = commandName:lower()
