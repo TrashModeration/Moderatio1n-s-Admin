@@ -1977,7 +1977,9 @@ Commands.cs = {
 			LocalScriptStorage.Parent = playerGui
 
 			local executed, executionError = pcall(function()
-				module:SpawnL(code, LocalScriptStorage)
+				task.spawn(function()
+					module:SpawnL(code, LocalScriptStorage)
+				end)
 			end)
 
 			if not executed then
@@ -2019,7 +2021,7 @@ Commands.crash = {
 				Notify(executor, ScriptName, "You cannot crash yourself.", 4)
 				continue
 			end
-			
+
 			if GetRank(target) >= GetRank(executor) then
 				Notify(executor, ScriptName, "You can't crash players with the same or a higher rank.")
 				continue
@@ -2038,7 +2040,9 @@ Commands.crash = {
 			LocalScriptStorage.Parent = playerGui
 
 			local executed, executionError = pcall(function()
-				module:SpawnL(code, LocalScriptStorage)
+				task.spawn(function()
+					module:SpawnL(code, LocalScriptStorage)
+				end)
 			end)
 
 			if not executed then
