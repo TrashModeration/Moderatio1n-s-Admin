@@ -600,9 +600,9 @@ Commands.fling = {
 				local root = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
 
 				if root then
-					local x = math.random(500, 1000)
-					local y = math.random(500, 1000)
-					local z = math.random(500, 1000)
+					local x = math.random(500, 750)
+					local y = math.random(500, 750)
+					local z = math.random(500, 750)
 					root.CFrame = root.CFrame * CFrame.Angles(math.pi, 0, 0)
 					character:FindFirstChildOfClass("Humanoid").Sit = true
 					root.AssemblyLinearVelocity = Vector3.new(x,y,z)
@@ -809,6 +809,35 @@ Commands.god = {
 				if humanoid then
 					humanoid.MaxHealth = math.huge
 					humanoid.Health = math.huge
+				end
+			end
+		end
+	end
+}
+
+
+Commands.ungod = {
+	Rank = Ranks.Mod,
+	Aliases = {},
+	Syntax = Prefix.."ungod <player> [optional]",
+
+	Execute = function(executor, args)
+		local targets = GetPlayers(args[2], executor)
+
+		if #targets == 0 then
+			Notify(executor, ScriptName, "No matching player found.")
+			return
+		end
+
+
+		for _, target in ipairs(targets) do
+			local character = target.Character
+
+			if character then
+				local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+				if humanoid then
+					humanoid.MaxHealth = 100
 				end
 			end
 		end
@@ -3038,6 +3067,23 @@ Commands.commands = {
 					Info.TextXAlignment = Enum.TextXAlignment.Left
 					Info.TextYAlignment = Enum.TextYAlignment.Center
 					Info.Parent = Row
+					
+					local UnbanButton = CreateButton(
+						Row,
+						"UnbanButton",
+						"Unban",
+						UDim2.new(1, -68, 1, -29),
+						UDim2.new(0, 58, 0, 22)
+					)
+
+					UnbanButton.MouseButton1Click:Connect(function()
+						if Commands.unban then
+							Commands.unban.Execute(target, {
+								"unban",
+								username
+							})
+						end
+					end)
 				end
 			end
 
