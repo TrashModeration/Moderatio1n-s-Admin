@@ -3050,7 +3050,7 @@ Commands.commands = {
 					Info.Text = displayName.." (@"..username..")"
 						.."\nUserId: "..tostring(entry.UserId)
 						.."\nReason: "..reason
-						.."\nBanned by:"..banner
+						.."\nBanned by: "..banner
 						.."\nBan rank: "..rankName
 					Info.TextColor3 = Color3.fromRGB(215, 215, 225)
 					Info.TextSize = 10
