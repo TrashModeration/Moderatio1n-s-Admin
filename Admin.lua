@@ -2228,7 +2228,8 @@ Commands.ban = {
 				Name = target.Name,
 				DisplayName = target.DisplayName,
 				Reason = reason,
-				Rank = GetRank(executor)
+				Rank = GetRank(executor),
+				Banner = executor.Name
 			}
 
 			target:Kick("[Moderatio1n's Admin]: " .. reason)
@@ -2240,7 +2241,7 @@ Commands.ban = {
 Commands.unban = {
 	Rank = Ranks.Admin,
 	Aliases = {"unsban", "unserverban"},
-	Syntax = Prefix .."unban <player>",
+	Syntax = Prefix .. "unban <player>",
 
 	Execute = function(executor, args)
 		local targetName = table.concat(args, " ", 2):lower()
@@ -2252,7 +2253,6 @@ Commands.unban = {
 
 		local closestUserId
 		local closestName
-		local closestRank
 		local bestMatch = math.huge
 
 		for userId, banInfo in pairs(ServerBans) do
@@ -2284,7 +2284,6 @@ Commands.unban = {
 							bestMatch = score
 							closestUserId = userId
 							closestName = username
-							closestRank = type(banInfo) == "table" and banInfo.Rank or 0
 						end
 					end
 				end
@@ -2293,16 +2292,6 @@ Commands.unban = {
 
 		if not closestUserId then
 			Notify(executor, ScriptName, "No matching player found.", 4)
-			return
-		end
-
-		if closestRank > GetRank(executor) then
-			Notify(
-				executor,
-				ScriptName,
-				"You cannot unban " .. closestName .. " because they were banned by someone with a higher rank.",
-				4
-			)
 			return
 		end
 
@@ -3030,6 +3019,7 @@ Commands.commands = {
 					local displayName = tostring(banData.DisplayName or banData.Name or entry.UserId)
 					local username = tostring(banData.Name or "Unknown")
 					local reason = tostring(banData.Reason or "No reason provided.")
+					local banner = tostring(banData.Banner or "Unknown")
 					local rankName = RankNames[banData.Rank] or "Unknown"
 
 					local Row = Instance.new("Frame")
@@ -3060,6 +3050,7 @@ Commands.commands = {
 					Info.Text = displayName.." (@"..username..")"
 						.."\nUserId: "..tostring(entry.UserId)
 						.."\nReason: "..reason
+						.."\nBanned by:"..banner
 						.."\nBan rank: "..rankName
 					Info.TextColor3 = Color3.fromRGB(215, 215, 225)
 					Info.TextSize = 10
