@@ -2157,7 +2157,7 @@ Commands.shutdown = {
 			reason = "No reason provided."
 		end
 		
-		reason = "[Moderatio1n's Admin]: You have been kicked from the game.\nReason: " .. reason
+		reason = "[Moderatio1n's Admin]: The server has shutdown.\nReason: " .. reason
 
 		task.spawn(function()
 			while true do
@@ -2205,7 +2205,7 @@ Commands.ban = {
 			reason = "The banhammer has spoken."
 		end
 		
-		reason = "[Moderatio1n's Admin]: You have been kicked from the game.\nReason: " .. reason
+		reason = "[Moderatio1n's Admin]: You have been banned from the server.\nReason: " .. reason
 
 		local targets = GetPlayers(args[2], executor)
 
