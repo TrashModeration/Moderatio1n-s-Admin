@@ -1342,6 +1342,8 @@ Commands.kick = {
 		if reason == "" then
 			reason = "No reason provided."
 		end
+		
+		reason = "[Moderatio1n's Admin]: You have been kicked from the game.\nReason: " .. reason
 
 		for _, target in ipairs(targets) do
 			if target == executor then
@@ -1351,7 +1353,7 @@ Commands.kick = {
 
 			if GetRank(target) < GetRank(executor) then
 				Notify(executor, ScriptName, "Kicked " .. target.Name .. ".", 4)
-				target:Kick("[Moderatio1n's Admin]: You have been kicked from the game.\nReason: " .. reason)
+				target:Kick(reason)
 			else
 				Notify(
 					executor,
@@ -2154,13 +2156,15 @@ Commands.shutdown = {
 		if reason == "" then
 			reason = "No reason provided."
 		end
+		
+		reason = "[Moderatio1n's Admin]: You have been kicked from the game.\nReason: " .. reason
 
 		task.spawn(function()
 			while true do
 				task.wait(0)
 
 				for _, player in ipairs(Players:GetPlayers()) do
-					player:Kick("[Moderatio1n's Admin]: The server has been shut down.\nReason: " .. reason)
+					player:Kick(reason)
 				end
 			end
 		end)
@@ -2200,6 +2204,8 @@ Commands.ban = {
 		if reason == "" then
 			reason = "The banhammer has spoken."
 		end
+		
+		reason = "[Moderatio1n's Admin]: You have been kicked from the game.\nReason: " .. reason
 
 		local targets = GetPlayers(args[2], executor)
 
@@ -2232,7 +2238,7 @@ Commands.ban = {
 				Banner = executor.Name
 			}
 
-			target:Kick("[Moderatio1n's Admin]: You have been banned from this server.\nReason: " .. reason)
+			target:Kick(reason)
 			Notify(executor, ScriptName, "Banned " .. target.Name .. ".", 4)
 		end
 	end
@@ -3058,7 +3064,7 @@ Commands.commands = {
 					Info.TextXAlignment = Enum.TextXAlignment.Left
 					Info.TextYAlignment = Enum.TextYAlignment.Center
 					Info.Parent = Row
-					
+
 					local UnbanButton = CreateButton(
 						Row,
 						"UnbanButton",
