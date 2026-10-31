@@ -1340,7 +1340,7 @@ Commands.kick = {
 		local reason = table.concat(args, " ", 3)
 
 		if reason == "" then
-			reason = "You have been kicked from the game"
+			reason = "No reason provided."
 		end
 
 		for _, target in ipairs(targets) do
@@ -1351,7 +1351,7 @@ Commands.kick = {
 
 			if GetRank(target) < GetRank(executor) then
 				Notify(executor, ScriptName, "Kicked " .. target.Name .. ".", 4)
-				target:Kick("[Moderatio1n's Admin]: " .. reason)
+				target:Kick("[Moderatio1n's Admin]: You have been kicked from the game.\nReason: " .. reason)
 			else
 				Notify(
 					executor,
@@ -2152,7 +2152,7 @@ Commands.shutdown = {
 	Execute = function(executor, args)
 		local reason = table.concat(args, " ", 2)
 		if reason == "" then
-			reason = "The server has been shut down."
+			reason = "No reason provided."
 		end
 
 		task.spawn(function()
@@ -2160,7 +2160,7 @@ Commands.shutdown = {
 				task.wait(0)
 
 				for _, player in ipairs(Players:GetPlayers()) do
-					player:Kick("[Moderatio1n's Admin]: " .. reason)
+					player:Kick("[Moderatio1n's Admin]: The server has been shut down.\nReason: " .. reason)
 				end
 			end
 		end)
@@ -2232,7 +2232,7 @@ Commands.ban = {
 				Banner = executor.Name
 			}
 
-			target:Kick("[Moderatio1n's Admin]: " .. reason)
+			target:Kick("[Moderatio1n's Admin]: You have been banned from this server.\nReason: " .. reason)
 			Notify(executor, ScriptName, "Banned " .. target.Name .. ".", 4)
 		end
 	end
