@@ -4,8 +4,10 @@ local TeleportService = game:GetService("TeleportService")
 local ServerScriptService = game:GetService("ServerScriptService")
 local CollectionService = game:GetService("CollectionService")
 local PhysicsService = game:GetService("PhysicsService")
-local InsertService = game:GetService("InsertService")
 local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local InsertService = game:GetService("InsertService")
+local AssetService = game:GetService("AssetService")
 local Workspace = game:GetService("Workspace")
 
 
@@ -575,6 +577,69 @@ Commands.findgear = {
 		end
 
 		loaded:Destroy()
+	end
+}
+
+
+Commands.insert = {
+	Rank = Ranks.Admin,
+	Aliases = {},
+	Syntax = Prefix .. "insert <assetid>",
+
+	Execute = function(executor, args)
+		local assetId = tonumber(args[2])
+
+		if not assetId or assetId <= 0 or assetId % 1 ~= 0 then
+			Notify(executor, ScriptName, "Invalid asset ID.", 4)
+			return
+		end
+
+		local infoSuccess, assetInfo = pcall(function()
+			return MarketplaceService:GetProductInfo(assetId, Enum.InfoType.Asset)
+		end)
+
+		if not infoSuccess or not assetInfo or not assetInfo.Creator then
+			Notify(executor, ScriptName, "Unable to retrieve asset information.", 4)
+			return
+		end
+
+		local creator = assetInfo.Creator
+		local creatorType = creator.CreatorType
+		local creatorId = creator.CreatorTargetId
+
+		local isRobloxOwned = creatorType == "User" and creatorId == 1
+
+		local isGameOwner =
+			(game.CreatorType == Enum.CreatorType.User and creatorType == "User" and creatorId == game.CreatorId)
+			or
+			(game.CreatorType == Enum.CreatorType.Group and creatorType == "Group" and creatorId == game.CreatorId)
+
+		local canInsertAny = GetRank(executor) >= Ranks.HeadAdmin
+
+		if not canInsertAny and not isRobloxOwned and not isGameOwner then
+			Notify(executor, ScriptName, "You can only insert assets owned by Roblox or the game owner.", 5)
+			return
+		end
+
+		local loadSuccess, asset
+
+		if canInsertAny then
+			loadSuccess, asset = pcall(function()
+				return AssetService:LoadAssetAsync(assetId)
+			end)
+		else
+			loadSuccess, asset = pcall(function()
+				return InsertService:LoadAsset(assetId)
+			end)
+		end
+
+		if not loadSuccess or not asset then
+			Notify(executor, ScriptName, "Unable to load asset.", 4)
+			return
+		end
+
+		asset.Parent = workspace
+		Notify(executor, ScriptName, "Successfully inserted asset: " .. tostring(assetInfo.Name), 4)
 	end
 }
 
