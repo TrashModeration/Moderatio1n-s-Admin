@@ -511,11 +511,6 @@ Commands.findgear = {
 			return
 		end
 
-		if not IsRobloxGear(gearId) then
-			Notify(executor, ScriptName, "This asset is not an official Roblox Gear.", 4)
-			return
-		end
-
 		local url = "https://catalog.roproxy.com/v1/search/items?category=Accessories&includeNotForSale=true&limit=10&salesTypeFilter=1&subcategory=Gear&Keyword="
 			.. HttpService:UrlEncode(gearName)
 
@@ -545,6 +540,11 @@ Commands.findgear = {
 
 		if not gearId then
 			Notify(executor, ScriptName, "Unable to find gear: " .. gearName, 4)
+			return
+		end
+
+		if not IsRobloxGear(gearId) then
+			Notify(executor, ScriptName, "This asset is not an official Roblox Gear.", 4)
 			return
 		end
 
