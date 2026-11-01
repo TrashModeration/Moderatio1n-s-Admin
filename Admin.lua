@@ -838,6 +838,7 @@ Commands.ungod = {
 
 				if humanoid then
 					humanoid.MaxHealth = 100
+					humanoid.Health = 100
 				end
 			end
 		end
