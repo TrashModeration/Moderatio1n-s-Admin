@@ -28,7 +28,7 @@ local Ranks = {
 }
 
 local PlayerRanks = {
-	[4769427369] = Ranks.Owner, --trashmoderatio1n
+	[4769427369] = Ranks.Admin, --trashmoderatio1n
 	[11039225519] = Ranks.HeadAdmin, --NnamesSkid (testing)
 	[653626782] = Ranks.HeadAdmin --o9sews
 }
