@@ -594,6 +594,18 @@ Commands.insert = {
 			return
 		end
 
+		local character = executor.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+
+		if not root then
+			Notify(executor, ScriptName, "Your character is not loaded.", 4)
+			return
+		end
+
+		local MarketplaceService = game:GetService("MarketplaceService")
+		local AssetService = game:GetService("AssetService")
+		local InsertService = game:GetService("InsertService")
+
 		local infoSuccess, assetInfo = pcall(function()
 			return MarketplaceService:GetProductInfo(assetId, Enum.InfoType.Asset)
 		end)
@@ -617,7 +629,7 @@ Commands.insert = {
 		local canInsertAny = GetRank(executor) >= Ranks.HeadAdmin
 
 		if not canInsertAny and not isRobloxOwned and not isGameOwner then
-			Notify(executor, ScriptName, "You can only insert assets owned by Roblox or the game owner.", 5)
+			Notify(executor, ScriptName, "Only HeadAdmins or higher can insert assets not owned by Roblox or the game owner.", 5)
 			return
 		end
 
@@ -634,15 +646,27 @@ Commands.insert = {
 		end
 
 		if not loadSuccess or not asset then
-			Notify(executor, ScriptName, "Unable to load asset.", 4)
+			if canInsertAny then
+				Notify(
+					executor,
+					ScriptName,
+					"Unable to load asset. If this is a third-party asset, enable Allow Loading Third Party Assets in Game Settings > Security.",
+					6
+				)
+			else
+				Notify(executor, ScriptName, "Unable to load asset.", 4)
+			end
 			return
 		end
 
+		asset:PivotTo(root.CFrame * CFrame.new(0, 0, -5))
+		asset.Sandboxed = false
+		asset.Capabilities = SecurityCapabilities.new()
 		asset.Parent = workspace
-		Notify(executor, ScriptName, "Successfully inserted asset: " .. tostring(assetInfo.Name), 4)
+
+		Notify(executor, ScriptName, "Successfully inserted " .. tostring(assetInfo.Name) .. ".", 4)
 	end
 }
-
 
 Commands.heal = {
 	Rank = Ranks.Mod,
