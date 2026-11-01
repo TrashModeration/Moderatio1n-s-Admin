@@ -261,6 +261,25 @@ local function GetPlayers(target, executor)
 end
 
 
+local function IsRobloxGear(gearId)
+	local success, response = pcall(function()
+		return HttpService:GetAsync(
+			"https://economy.roproxy.com/v2/assets/" .. gearId .. "/details"
+		)
+	end)
+
+	if not success then
+		return false
+	end
+
+	local decodeSuccess, data = pcall(function()
+		return HttpService:JSONDecode(response)
+	end)
+
+	return decodeSuccess and data and data.AssetTypeId == 19
+end
+
+
 local LoadstringModule
 
 local function GetLoadstringModule()
@@ -436,6 +455,11 @@ Commands.gear = {
 			return
 		end
 
+		if not IsRobloxGear(gearId) then
+			Notify(executor, ScriptName, "This asset is not an official Roblox Gear.", 4)
+			return
+		end
+
 		local success, gear = pcall(function()
 			return InsertService:LoadAsset(gearId)
 		end)
@@ -484,6 +508,11 @@ Commands.findgear = {
 
 		if gearName == "" then
 			Notify(executor, ScriptName, "Syntax error. Usage: " .. Commands.findgear.Syntax, 4)
+			return
+		end
+
+		if not IsRobloxGear(gearId) then
+			Notify(executor, ScriptName, "This asset is not an official Roblox Gear.", 4)
 			return
 		end
 
