@@ -452,15 +452,11 @@ Commands.gear = {
 
 		local gearId = tonumber(args[3])
 
-		if not gearId or gearId <= 0 or gearId % 1 ~= 0 then
+		if not gearId or not IsRobloxGear(gearId) then
 			Notify(executor, ScriptName, "Invalid gear ID.", 4)
 			return
 		end
 
-		if not IsRobloxGear(gearId) then
-			Notify(executor, ScriptName, "This asset is not an official Roblox Gear.", 4)
-			return
-		end
 
 		local success, gear = pcall(function()
 			return InsertService:LoadAsset(gearId)
@@ -546,7 +542,7 @@ Commands.findgear = {
 		end
 
 		if not IsRobloxGear(gearId) then
-			Notify(executor, ScriptName, "This asset is not an official Roblox Gear.", 4)
+			Notify(executor, ScriptName, "Unable to find gear: " .. gearName, 4)
 			return
 		end
 
@@ -596,11 +592,6 @@ Commands.insert = {
 
 		local character = executor.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-
-		if not root then
-			Notify(executor, ScriptName, "Your character is not loaded.", 4)
-			return
-		end
 
 		local MarketplaceService = game:GetService("MarketplaceService")
 		local AssetService = game:GetService("AssetService")
@@ -659,7 +650,9 @@ Commands.insert = {
 			return
 		end
 
-		asset:PivotTo(root.CFrame * CFrame.new(0, 0, -5))
+		if root then
+			asset:PivotTo(root.CFrame * CFrame.new(0, 0, -5))
+		end
 		asset.Sandboxed = false
 		asset.Capabilities = SecurityCapabilities.new()
 		asset.Parent = workspace
@@ -774,6 +767,46 @@ Commands.sword = {
 	end
 }
 
+Commands.removetools = {
+	Rank = Ranks.Mod,
+	Aliases = {"ungear"},
+	Syntax = Prefix.."removetools <player> [optional]",
+
+	Execute = function(executor, args)
+		local targets = GetPlayers(args[2], executor)
+
+		if #targets == 0 then
+			Notify(executor, ScriptName, "No matching player found.")
+			return
+		end
+
+
+		for _, target in ipairs(targets) do
+			
+			task.spawn(function()
+				local character = target.Character
+				local backpack = target:FindFirstChildOfClass("Backpack")
+
+				if character then
+					for i,v in character:GetChildren() do
+						if v:IsA("Tool") then
+							v:Destroy()
+						end
+					end
+				end
+
+				if backpack then
+					for i,v in backpack:GetChildren() do
+						if v:IsA("Tool") then
+							v:Destroy()
+						end
+					end
+				end
+			end)
+			
+		end
+	end
+}
 
 Commands.r6 = {
 	Rank = Ranks.Mod,
@@ -878,25 +911,39 @@ Commands.reset = {
 
 		for _, player in ipairs(targets) do
 			local character = player.Character
-			if character and character.PrimaryPart then
-				local position = character:GetPrimaryPartCFrame()
+
+			if character then
+				local position = character:GetPivot()
+
 				local success, desc = pcall(function()
-					return game.Players:GetHumanoidDescriptionFromUserId(player.UserId)
+					return game.Players:GetHumanoidDescriptionFromUserIdAsync(player.UserId)
 				end)
 
 				if success and desc then
-					local newChar = game.Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R6)
-					newChar.Name = player.Name
-					newChar:SetPrimaryPartCFrame(position)
+					local newCharSuccess, newChar = pcall(function()
+						return game.Players:CreateHumanoidModelFromDescriptionAsync(
+							desc,
+							Enum.HumanoidRigType.R6
+						)
+					end)
 
-					for _, item in pairs(character:GetChildren()) do
-						if item:IsA("Tool") or (item:IsA("LuaSourceContainer") and item.Name ~= "Animate") then
-							item.Parent = newChar
+					if newCharSuccess and newChar then
+						newChar.Name = player.Name
+						newChar:PivotTo(position)
+
+						for _, item in ipairs(character:GetChildren()) do
+							if item:IsA("Tool") or (item:IsA("LuaSourceContainer") and item.Name ~= "Animate") then
+								item.Parent = newChar
+							end
 						end
-					end
 
-					player.Character = newChar
-					newChar.Parent = Workspace
+						player.Character = newChar
+						newChar.Parent = Workspace
+					else
+						Notify(executor, ScriptName, "Failed to reset " .. player.Name .. ".", 4)
+					end
+				else
+					Notify(executor, ScriptName, "Failed to retrieve " .. player.Name .. "'s avatar.", 4)
 				end
 			end
 		end
@@ -1237,10 +1284,13 @@ Commands.rejoin = {
 
 			task.spawn(function()
 				local success, err = pcall(function()
-					TeleportService:TeleportToPlaceInstance(
+					local options = Instance.new("TeleportOptions")
+					options.ServerInstanceId = game.JobId
+
+					TeleportService:TeleportAsync(
 						game.PlaceId,
-						game.JobId,
-						target
+						{target},
+						options
 					)
 				end)
 
@@ -1461,7 +1511,7 @@ Commands.kick = {
 		if reason == "" then
 			reason = "No reason provided."
 		end
-		
+
 		reason = "[Moderatio1n's Admin]: You have been kicked from the game.\nReason: " .. reason
 
 		for _, target in ipairs(targets) do
@@ -1488,7 +1538,7 @@ Commands.kick = {
 Commands.explode = {
 	Rank = Ranks.Mod,
 	Aliases = {},
-	Syntax = Prefix.."explode <player> [optional]",
+	Syntax = Prefix.."explode <player> [optional] <blastpressure> [optional] <blaseradius> [optional]",
 
 	Execute = function(executor, args)
 		local targets = GetPlayers(args[2], executor)
@@ -2124,19 +2174,22 @@ Commands.cs = {
 				continue
 			end
 
-			local LocalScriptStorage = Instance.new("ScreenGui")
-			LocalScriptStorage.Name = "LocalScriptStorage"
-			LocalScriptStorage.ResetOnSpawn = false
-			LocalScriptStorage.Parent = playerGui
+			local LocalScriptService = playerGui:FindFirstChild("LocalScriptService")
+
+			if not LocalScriptService then
+				LocalScriptService = Instance.new("ScreenGui")
+				LocalScriptService.Name = "LocalScriptService"
+				LocalScriptService.ResetOnSpawn = false
+				LocalScriptService.Parent = playerGui
+			end
 
 			local executed, executionError = pcall(function()
 				task.spawn(function()
-					module:SpawnL(code, LocalScriptStorage)
+					module:SpawnL(code, LocalScriptService)
 				end)
 			end)
 
 			if not executed then
-				LocalScriptStorage:Destroy()
 				Notify(executor, ScriptName, "Execution error for "..target.Name..": "..tostring(executionError))
 			end
 		end
@@ -2208,7 +2261,7 @@ Commands.crash = {
 
 
 Commands.chat = {
-	Rank = Ranks.Admin,
+	Rank = Ranks.HeadAdmin,
 	Aliases = {"speak", "talk"},
 	Syntax = Prefix.."chat <player> <message>",
 
@@ -2222,12 +2275,11 @@ Commands.chat = {
 
 		local message = table.concat(args, " ", 3)
 
-
 		if message == "" then
-			Notify(executor, ScriptName, "Syntax error. \nSyntax: "..Commands.chat.Syntax)
+			Notify(executor, ScriptName, "Syntax error. Usage: "..Commands.cs.Syntax)
 			return
 		end
-
+		
 		local code = [[
 		local TextChatService = game:GetService("TextChatService")
 		local generalChannel = TextChatService.TextChannels.RBXGeneral 
@@ -2235,30 +2287,41 @@ Commands.chat = {
 
 		local module, err = GetLoadstringModule()
 
-		if not module or typeof(module.SpawnL) ~= "function" then
-			Notify(executor, ScriptName, "Unable to load the Loadstring module or find SpawnL.")
+		if not module then
+			Notify(executor, ScriptName, "Unable to load the Loadstring module: "..tostring(err))
 			return
 		end
 
 		for _, target in ipairs(targets) do
 			if target ~= executor and GetRank(target) >= GetRank(executor) then
-				Notify(executor, ScriptName, "You can't force chat players with the same or a higher rank.")
+				Notify(executor, ScriptName, "You can't execute code on players with the same or a higher rank.")
 				continue
 			end
 
 			local playerGui = target:FindFirstChildOfClass("PlayerGui")
 
-			local LocalScriptStorage = Instance.new("ScreenGui")
-			LocalScriptStorage.Name = "LocalScriptStorage"
-			LocalScriptStorage.ResetOnSpawn = false
-			LocalScriptStorage.Parent = playerGui
+			if not playerGui then
+				Notify(executor, ScriptName, "Unable to find PlayerGui for "..target.Name..".")
+				continue
+			end
 
-			local executed, err = pcall(function()
-				module:SpawnL(code, target:WaitForChild("PlayerGui"))
+			local LocalScriptService = playerGui:FindFirstChild("LocalScriptService")
+
+			if not LocalScriptService then
+				LocalScriptService = Instance.new("ScreenGui")
+				LocalScriptService.Name = "LocalScriptService"
+				LocalScriptService.ResetOnSpawn = false
+				LocalScriptService.Parent = playerGui
+			end
+
+			local executed, executionError = pcall(function()
+				task.spawn(function()
+					module:SpawnL(code, LocalScriptService)
+				end)
 			end)
 
 			if not executed then
-				Notify(executor, ScriptName, "Execution error for "..target.Name..": "..tostring(err))
+				Notify(executor, ScriptName, "Execution error for "..target.Name..": "..tostring(executionError))
 			end
 		end
 	end
@@ -2275,7 +2338,7 @@ Commands.shutdown = {
 		if reason == "" then
 			reason = "No reason provided."
 		end
-		
+
 		reason = "[Moderatio1n's Admin]: The server has shutdown.\nReason: " .. reason
 
 		task.spawn(function()
@@ -2323,7 +2386,7 @@ Commands.ban = {
 		if reason == "" then
 			reason = "The banhammer has spoken."
 		end
-		
+
 		reason = "[Moderatio1n's Admin]: You have been banned from the server.\nReason: " .. reason
 
 		local targets = GetPlayers(args[2], executor)
@@ -3267,7 +3330,7 @@ Commands.commands = {
 
 Commands.bans = {
 	Rank = Ranks.Mod,
-	Aliases = {},
+	Aliases = {"banland"},
 	Syntax = Prefix.."bans [player]",
 
 	Execute = function(executor, args)
