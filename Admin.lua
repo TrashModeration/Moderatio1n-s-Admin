@@ -783,7 +783,7 @@ Commands.removetools = {
 
 
 		for _, target in ipairs(targets) do
-			
+
 			task.spawn(function()
 				local character = target.Character
 				local backpack = target:FindFirstChildOfClass("Backpack")
@@ -804,7 +804,7 @@ Commands.removetools = {
 					end
 				end
 			end)
-			
+
 		end
 	end
 }
@@ -1855,17 +1855,13 @@ Commands.jail = {
 			WatchJail = function(model)
 				local expectedParents = {}
 
-				expectedParents[model] = Workspace
-
-				for _, object in ipairs(model:GetDescendants()) do
-					expectedParents[object] = object.Parent
-				end
-
 				local function AddConnection(connection)
 					table.insert(JailInfo.Connections, connection)
 				end
 
 				local function WatchObject(object)
+					expectedParents[object] = object.Parent
+
 					AddConnection(object.Destroying:Connect(function()
 						ReplaceJail()
 					end))
@@ -1883,7 +1879,9 @@ Commands.jail = {
 					end
 				end
 
-				for object in pairs(expectedParents) do
+				WatchObject(model)
+
+				for _, object in ipairs(model:GetDescendants()) do
 					WatchObject(object)
 				end
 
@@ -2302,7 +2300,7 @@ Commands.chat = {
 			Notify(executor, ScriptName, "Syntax error. Usage: "..Commands.cs.Syntax)
 			return
 		end
-		
+
 		local code = [[
 		local TextChatService = game:GetService("TextChatService")
 		local generalChannel = TextChatService.TextChannels.RBXGeneral 
