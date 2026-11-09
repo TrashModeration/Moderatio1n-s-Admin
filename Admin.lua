@@ -932,12 +932,6 @@ Commands.reset = {
 						newChar.Name = player.Name
 						newChar:PivotTo(position)
 
-						for _, item in ipairs(character:GetChildren()) do
-							if item:IsA("Tool") or (item:IsA("LuaSourceContainer") and item.Name ~= "Animate") then
-								item.Parent = newChar
-							end
-						end
-
 						player.Character = newChar
 						newChar.Parent = Workspace
 					else
