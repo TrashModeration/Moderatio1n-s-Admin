@@ -9,6 +9,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local InsertService = game:GetService("InsertService")
 local AssetService = game:GetService("AssetService")
 local Workspace = game:GetService("Workspace")
+local ServerStorage = game:GetService("ServerStorage")
 
 
 local Prefix = ":"
@@ -1790,6 +1791,10 @@ Commands.jail = {
 			local JailHumanoid = Instance.new("Humanoid")
 			JailHumanoid.Parent = Jail
 
+			-- Create an untouched copy to use when the jail is tampered with.
+			local JailTemplate = Jail:Clone()
+			JailTemplate.Parent = ServerStorage
+
 			Jail.Parent = Workspace
 			CollectionService:AddTag(Jail, "Moderatio1n's Jail")
 
@@ -1798,91 +1803,49 @@ Commands.jail = {
 				Center = Center,
 				Destroying = false,
 				Connections = {},
-				TrackedObjects = {}
+				TrackedObjects = {},
+				Template = JailTemplate
 			}
 
 			JailedPlayers[target.UserId] = JailInfo
 
-			local function TrackObject(object)
-				if JailInfo.TrackedObjects[object] then
+			local function GetJailSnapshot(model)
+				local snapshot = {}
+
+				for _, object in ipairs(model:GetDescendants()) do
+					snapshot[object] = {
+						Parent = object.Parent,
+						CFrame = object:IsA("BasePart") and object.CFrame or nil,
+						Size = object:IsA("BasePart") and object.Size or nil,
+						CanCollide = object:IsA("BasePart") and object.CanCollide or nil
+					}
+				end
+
+				return snapshot
+			end
+
+			local JailSnapshot = GetJailSnapshot(Jail)
+
+			local function ReplaceJail()
+				if JailedPlayers[target.UserId] ~= JailInfo then
 					return
 				end
 
-				local objectInfo = {
-					Restoring = false,
-					Destroying = false
-				}
+				local oldJail = JailInfo.Model
+				local newJail = JailInfo.Template:Clone()
 
-				JailInfo.TrackedObjects[object] = objectInfo
+				newJail.Parent = Workspace
+				CollectionService:AddTag(newJail, "Moderatio1n's Jail")
 
-				table.insert(JailInfo.Connections, object.Destroying:Connect(function()
-					objectInfo.Destroying = true
-				end))
+				JailInfo.Model = newJail
+				JailSnapshot = GetJailSnapshot(newJail)
 
-				table.insert(JailInfo.Connections, object.AncestryChanged:Connect(function()
-					if objectInfo.Restoring
-						or objectInfo.Destroying
-						or JailInfo.Destroying
-						or JailInfo.TrackedObjects[object] ~= objectInfo then
-						return
-					end
-
-					if object.Parent == nil then
-						objectInfo.Restoring = true
-
-						task.defer(function()
-							if not objectInfo.Destroying
-								and not JailInfo.Destroying
-								and JailInfo.TrackedObjects[object] == objectInfo
-								and object.Parent == nil then
-
-								if object == Jail then
-									object.Parent = Workspace
-								else
-									object.Parent = Jail
-								end
-							end
-
-							objectInfo.Restoring = false
-						end)
-					end
-				end))
+				if oldJail then
+					oldJail:Destroy()
+				end
 			end
 
-			TrackObject(Jail)
-
-			for _, object in ipairs(Jail:GetDescendants()) do
-				TrackObject(object)
-			end
-
-			table.insert(JailInfo.Connections, Jail.DescendantAdded:Connect(function(object)
-				TrackObject(object)
-
-				for _, descendant in ipairs(object:GetDescendants()) do
-					TrackObject(descendant)
-				end
-			end))
-
-			JailInfo.DestroyingConnection = Jail.Destroying:Connect(function()
-				JailInfo.Destroying = true
-
-				if JailedPlayers[target.UserId] == JailInfo then
-					JailedPlayers[target.UserId] = nil
-				end
-
-				for _, connection in ipairs(JailInfo.Connections) do
-					connection:Disconnect()
-				end
-
-				table.clear(JailInfo.Connections)
-				table.clear(JailInfo.TrackedObjects)
-
-				if JailInfo.CharacterConnection then
-					JailInfo.CharacterConnection:Disconnect()
-				end
-			end)
-
-			local function ReturnToJail(characterToReturn)
+			JailInfo.CharacterConnection = target.CharacterAdded:Connect(function(characterToReturn)
 				task.spawn(function()
 					local characterRoot = characterToReturn:WaitForChild("HumanoidRootPart", 10)
 
@@ -1900,14 +1863,52 @@ Commands.jail = {
 					characterRoot.AssemblyLinearVelocity = Vector3.zero
 					characterRoot.AssemblyAngularVelocity = Vector3.zero
 				end)
-			end
-
-			JailInfo.CharacterConnection = target.CharacterAdded:Connect(ReturnToJail)
+			end)
 
 			root.CFrame = Center
 			root.AssemblyLinearVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
 
+			-- Check the jail for modifications and replace it when necessary.
+			task.spawn(function()
+				while target.Parent and JailedPlayers[target.UserId] == JailInfo do
+					task.wait(0.1)
+
+					local currentJail = JailInfo.Model
+					local tampered = not currentJail or currentJail.Parent ~= Workspace
+
+					if not tampered then
+						local currentDescendants = currentJail:GetDescendants()
+
+						if #currentDescendants ~= #JailSnapshot then
+							tampered = true
+						else
+							for object, original in pairs(JailSnapshot) do
+								if object.Parent ~= original.Parent then
+									tampered = true
+									break
+								end
+
+								if object:IsA("BasePart") then
+									if object.CFrame ~= original.CFrame
+										or object.Size ~= original.Size
+										or object.CanCollide ~= original.CanCollide then
+
+										tampered = true
+										break
+									end
+								end
+							end
+						end
+					end
+
+					if tampered then
+						ReplaceJail()
+					end
+				end
+			end)
+
+			-- Keep the jailed player inside the jail.
 			task.spawn(function()
 				while target.Parent and JailedPlayers[target.UserId] == JailInfo do
 					task.wait(0.1)
@@ -1957,14 +1958,22 @@ Commands.unjail = {
 				continue
 			end
 
+			JailedPlayers[target.UserId] = nil
+
 			if JailInfo.Model then
 				JailInfo.Model:Destroy()
-			else
-				JailedPlayers[target.UserId] = nil
+			end
 
-				if JailInfo.CharacterConnection then
-					JailInfo.CharacterConnection:Disconnect()
-				end
+			if JailInfo.Template then
+				JailInfo.Template:Destroy()
+			end
+
+			if JailInfo.CharacterConnection then
+				JailInfo.CharacterConnection:Disconnect()
+			end
+
+			for _, connection in ipairs(JailInfo.Connections) do
+				connection:Disconnect()
 			end
 		end
 	end
