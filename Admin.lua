@@ -1791,7 +1791,6 @@ Commands.jail = {
 			local JailHumanoid = Instance.new("Humanoid")
 			JailHumanoid.Parent = Jail
 
-			-- Store an untouched copy of the jail.
 			local JailTemplate = Jail:Clone()
 			JailTemplate.Parent = ServerStorage
 
@@ -1892,7 +1891,6 @@ Commands.jail = {
 
 			WatchJail(Jail)
 
-			-- Return players to the jail when their character respawns.
 			JailInfo.CharacterConnection = target.CharacterAdded:Connect(function(characterToReturn)
 				task.spawn(function()
 					local characterRoot = characterToReturn:WaitForChild("HumanoidRootPart", 10)
@@ -1917,7 +1915,6 @@ Commands.jail = {
 			root.AssemblyLinearVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
 
-			-- Keep the player inside the jail.
 			task.spawn(function()
 				while target.Parent and JailedPlayers[target.UserId] == JailInfo do
 					task.wait(0.1)
@@ -1969,7 +1966,6 @@ Commands.unjail = {
 
 			JailedPlayers[target.UserId] = nil
 
-			-- Disconnect monitoring before destroying the jail.
 			for _, connection in ipairs(JailInfo.Connections) do
 				connection:Disconnect()
 			end
