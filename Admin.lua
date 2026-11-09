@@ -1791,7 +1791,7 @@ Commands.jail = {
 			local JailHumanoid = Instance.new("Humanoid")
 			JailHumanoid.Parent = Jail
 
-			-- Create an untouched copy to use when the jail is tampered with.
+			-- Store an untouched copy of the jail.
 			local JailTemplate = Jail:Clone()
 			JailTemplate.Parent = ServerStorage
 
@@ -1800,51 +1800,101 @@ Commands.jail = {
 
 			local JailInfo = {
 				Model = Jail,
+				Template = JailTemplate,
 				Center = Center,
-				Destroying = false,
 				Connections = {},
-				TrackedObjects = {},
-				Template = JailTemplate
+				Replacing = false
 			}
 
 			JailedPlayers[target.UserId] = JailInfo
 
-			local function GetJailSnapshot(model)
-				local snapshot = {}
-
-				for _, object in ipairs(model:GetDescendants()) do
-					snapshot[object] = {
-						Parent = object.Parent,
-						CFrame = object:IsA("BasePart") and object.CFrame or nil,
-						Size = object:IsA("BasePart") and object.Size or nil,
-						CanCollide = object:IsA("BasePart") and object.CanCollide or nil
-					}
+			local function DisconnectJailConnections()
+				for _, connection in ipairs(JailInfo.Connections) do
+					connection:Disconnect()
 				end
 
-				return snapshot
+				table.clear(JailInfo.Connections)
 			end
 
-			local JailSnapshot = GetJailSnapshot(Jail)
+			local WatchJail
 
 			local function ReplaceJail()
-				if JailedPlayers[target.UserId] ~= JailInfo then
+				if JailInfo.Replacing or JailedPlayers[target.UserId] ~= JailInfo then
 					return
 				end
 
-				local oldJail = JailInfo.Model
-				local newJail = JailInfo.Template:Clone()
+				JailInfo.Replacing = true
 
-				newJail.Parent = Workspace
-				CollectionService:AddTag(newJail, "Moderatio1n's Jail")
+				task.defer(function()
+					if JailedPlayers[target.UserId] ~= JailInfo then
+						JailInfo.Replacing = false
+						return
+					end
 
-				JailInfo.Model = newJail
-				JailSnapshot = GetJailSnapshot(newJail)
+					DisconnectJailConnections()
 
-				if oldJail then
-					oldJail:Destroy()
-				end
+					local oldJail = JailInfo.Model
+					local newJail = JailInfo.Template:Clone()
+
+					newJail.Parent = Workspace
+					CollectionService:AddTag(newJail, "Moderatio1n's Jail")
+
+					JailInfo.Model = newJail
+					JailInfo.Replacing = false
+
+					WatchJail(newJail)
+
+					if oldJail then
+						pcall(function()
+							oldJail:Destroy()
+						end)
+					end
+				end)
 			end
 
+			WatchJail = function(model)
+				local expectedParents = {}
+
+				expectedParents[model] = Workspace
+
+				for _, object in ipairs(model:GetDescendants()) do
+					expectedParents[object] = object.Parent
+				end
+
+				local function AddConnection(connection)
+					table.insert(JailInfo.Connections, connection)
+				end
+
+				local function WatchObject(object)
+					AddConnection(object.Destroying:Connect(function()
+						ReplaceJail()
+					end))
+
+					AddConnection(object.AncestryChanged:Connect(function()
+						if object.Parent ~= expectedParents[object] then
+							ReplaceJail()
+						end
+					end))
+
+					if object:IsA("BasePart") then
+						AddConnection(object:GetPropertyChangedSignal("CFrame"):Connect(ReplaceJail))
+						AddConnection(object:GetPropertyChangedSignal("Size"):Connect(ReplaceJail))
+						AddConnection(object:GetPropertyChangedSignal("CanCollide"):Connect(ReplaceJail))
+					end
+				end
+
+				for object in pairs(expectedParents) do
+					WatchObject(object)
+				end
+
+				AddConnection(model.DescendantAdded:Connect(function()
+					ReplaceJail()
+				end))
+			end
+
+			WatchJail(Jail)
+
+			-- Return players to the jail when their character respawns.
 			JailInfo.CharacterConnection = target.CharacterAdded:Connect(function(characterToReturn)
 				task.spawn(function()
 					local characterRoot = characterToReturn:WaitForChild("HumanoidRootPart", 10)
@@ -1869,46 +1919,7 @@ Commands.jail = {
 			root.AssemblyLinearVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
 
-			-- Check the jail for modifications and replace it when necessary.
-			task.spawn(function()
-				while target.Parent and JailedPlayers[target.UserId] == JailInfo do
-					task.wait(0.1)
-
-					local currentJail = JailInfo.Model
-					local tampered = not currentJail or currentJail.Parent ~= Workspace
-
-					if not tampered then
-						local currentDescendants = currentJail:GetDescendants()
-
-						if #currentDescendants ~= #JailSnapshot then
-							tampered = true
-						else
-							for object, original in pairs(JailSnapshot) do
-								if object.Parent ~= original.Parent then
-									tampered = true
-									break
-								end
-
-								if object:IsA("BasePart") then
-									if object.CFrame ~= original.CFrame
-										or object.Size ~= original.Size
-										or object.CanCollide ~= original.CanCollide then
-
-										tampered = true
-										break
-									end
-								end
-							end
-						end
-					end
-
-					if tampered then
-						ReplaceJail()
-					end
-				end
-			end)
-
-			-- Keep the jailed player inside the jail.
+			-- Keep the player inside the jail.
 			task.spawn(function()
 				while target.Parent and JailedPlayers[target.UserId] == JailInfo do
 					task.wait(0.1)
@@ -1960,20 +1971,23 @@ Commands.unjail = {
 
 			JailedPlayers[target.UserId] = nil
 
+			-- Disconnect monitoring before destroying the jail.
+			for _, connection in ipairs(JailInfo.Connections) do
+				connection:Disconnect()
+			end
+
+			table.clear(JailInfo.Connections)
+
+			if JailInfo.CharacterConnection then
+				JailInfo.CharacterConnection:Disconnect()
+			end
+
 			if JailInfo.Model then
 				JailInfo.Model:Destroy()
 			end
 
 			if JailInfo.Template then
 				JailInfo.Template:Destroy()
-			end
-
-			if JailInfo.CharacterConnection then
-				JailInfo.CharacterConnection:Disconnect()
-			end
-
-			for _, connection in ipairs(JailInfo.Connections) do
-				connection:Disconnect()
 			end
 		end
 	end
